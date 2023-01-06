@@ -25,6 +25,69 @@ flights = fr.get_flights()
 # Declare bounds using ZONE defined earlier
 bounds = fr.get_bounds(ZONE)
 
+# METAR Reports for airports of interest
+wxTPA = Metar('KTPA')
+wxGNV = Metar('KGNV')
+wxORD = Metar('KORD')
+
+# Get properties for all airports of interest
+wxTPAProperties = wxTPA.getAll()
+wxGNVProperties = wxGNV.getAll()
+wxORDProperties = wxORD.getAll()
+#print(wxTPAProperties.keys())
+
+# Get cloud properties 
+tpaCld = wxTPAProperties["cloud"]
+ordCld = wxORDProperties["cloud"]
+gnvCld = wxGNVProperties["cloud"]
+
+# TODO: PARSE METAR TEXT FOR VIS
+
+# Function to return flight rules as string
+def getFlightRules(cldID): # Use second param for vis
+    # TODO : Add visibility parameter
+    if (not cldID):
+        flightRules = "VFR"
+    else:
+        for i in range(len(cldID)):
+            code = cldID[i]["code"]
+            base = cldID[i]["altitude"]
+            vis = 0
+            if (code == "BKN" or code == "OVC"):
+                if (base < 500):
+                    flightRules = "LIFR"
+                elif (base >= 500 and base < 1000):
+                    flightRules = "IFR"
+                elif (base >= 1000 and base <= 3000):
+                    flightRules = "MVFR"
+                elif (base > 3000):
+                    flightRules = "VFR"
+                else:
+                    flightRules = "UNKN"
+            elif (code == "CLR"):
+                flightRules = "VFR"
+            else:
+                flightRules = "UNKN"
+    return flightRules
+
+def updateWx():
+    # METAR Reports for airports of interest
+    wxTPA = Metar('KTPA')
+    wxGNV = Metar('KGNV')
+    wxORD = Metar('KORD')
+
+    # Get properties for all airports of interest
+    wxTPAProperties = wxTPA.getAll()
+    wxGNVProperties = wxGNV.getAll()
+    wxORDProperties = wxORD.getAll()
+    #print(wxTPAProperties.keys())
+
+    # Get cloud properties 
+    tpaCld = wxTPAProperties["cloud"]
+    ordCld = wxORDProperties["cloud"]
+    gnvCld = wxGNVProperties["cloud"]
+
+
 
 while (counter == 0):
 
@@ -87,52 +150,12 @@ while (counter == 0):
         # Sleep so don't keep pollingserver
         sleep(20)
         
-        
-# METAR Reports for airports of interest
-wxTPA = Metar('KTPA')
-wxGNV = Metar('KGNV')
-wxORD = Metar('KORD')
-
-# Get properties for all airports of interest
-wxTPAProperties = wxTPA.getAll()
-wxGNVProperties = wxGNV.getAll()
-wxORDProperties = wxORD.getAll()
-#print(wxTPAProperties.keys())
-
-# Get cloud properties 
-tpaCld = wxTPAProperties["cloud"]
-ordCld = wxORDProperties["cloud"]
-gnvCld = wxGNVProperties["cloud"]
+    updateWx()
+    currGNVStatus = getFlightRules(gnvCld)
+    print(currGNVStatus)
 
 
-# TODO: PARSE METAR TEXT FOR VIS
 
-# Function to return flight rules as string
-def getFlightRules(cldID): # Use second param for vis
-    # TODO : Add visibility parameter
-    if (not cldID):
-        flightRules = "VFR"
-    else:
-        for i in range(len(cldID)):
-            code = cldID[i]["code"]
-            base = cldID[i]["altitude"]
-            vis = 0
-            if (code == "BKN" or code == "OVC"):
-                if (base < 500):
-                    flightRules = "LIFR"
-                elif (base >= 500 and base < 1000):
-                    flightRules = "IFR"
-                elif (base >= 1000 and base <= 3000):
-                    flightRules = "MVFR"
-                elif (base > 3000):
-                    flightRules = "VFR"
-                else:
-                    flightRules = "UNKN"
-            elif (code == "CLR"):
-                flightRules = "VFR"
-            else:
-                flightRules = "UNKN"
-    return flightRules
 
 print(wxTPA)
 print(wxORD)
