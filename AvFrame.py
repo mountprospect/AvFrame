@@ -2,9 +2,20 @@
 
 from FlightRadar24.api import FlightRadar24API
 from PythonMETAR import *
+from Adafruit_CharLCD import Adafruit_CharLCD
+from time import sleep
 
 # ZONE - Creates a zone to look for flights inside. tl is top left corner of box, br is bottom right.
 ZONE = {"tl_y": 29.754081, "tl_x": -82.511874, "br_y": 29.535365, "br_x": -82.147178 }
+
+# Time to wait in between switching info screens (seconds)
+DELAY = 3.5
+
+# Counts how many times button has been pressed to toggle modes
+counter = 0;
+
+# Declaring the LCD
+lcd = Adafruit_CharLCD (rs = 26, en = 19, d4 = 13, d5 = 6, d6 = 5, d7 = 21, cols = 16, lines = 2)
 
 fr = FlightRadar24API()
 airports = fr.get_airports()
@@ -14,29 +25,69 @@ flights = fr.get_flights()
 # Declare bounds using ZONE defined earlier
 bounds = fr.get_bounds(ZONE)
 
-# Find flights within zone
-flightsInZone = fr.get_flights(bounds = bounds)
 
-# Checks if any flights exist in zone
-if (len(flightsInZone) > 0):
-# Gets details of  flight for printing
-    for flight in flightsInZone:
-        details = fr.get_flight_details(flight.id)
-        flight.set_flight_details(details)
-        callsign = flight.callsign.upper()
-        alt = flight.altitude
-        model = flight.aircraft_model
-        code = flight.aircraft_code
-        origin = flight.origin_airport_icao.upper()
-        destination = flight.destination_airport_icao.upper()
+while (counter == 0):
 
-        print(callsign + "|" +  str(alt) + "|" + model + "|" + code + "|" + origin + "|" + destination)
-        print("\n")
-
-else:
-    print("No flights in zone")
+    # Find flights within zone
+    flightsInZone = fr.get_flights(bounds = bounds)
     
-    
+    # Checks if any flights exist in zone
+    if (len(flightsInZone) > 0):
+    # Gets details of  flight for printing
+        for flight in flightsInZone:
+            
+            lcd.clear()
+            
+            details = fr.get_flight_details(flight.id)
+            flight.set_flight_details(details)
+            callsign = flight.callsign.upper()
+            alt = flight.altitude
+            if (alt <=0):
+                continue
+            model = flight.aircraft_model
+            code = flight.aircraft_code
+            origin = flight.origin_airport_icao.upper()
+            destination = flight.destination_airport_icao.upper()
+            gs = flight.ground_speed
+            airline = flight.airline_name
+            status = flight.status_text
+            
+            print(callsign + "|" +  str(alt) + "|" + model + "|" + code + "|" + origin + "|" + destination)
+            print("\n" + str(gs) + "|" + airline + "|" + status)
+            
+            # Print first two screens of information
+            lcd.message(callsign + "   " + code + "\n")
+            lcd.message(str(gs) + " KT " + str(alt) + " FT\n")
+            sleep(DELAY)
+            lcd.clear()
+            lcd.message(status + "\n")
+            lcd.message(origin + " > " + destination)
+            sleep(DELAY)
+            lcd.clear()
+
+            # Print airline and model info, scrolling if necessary
+            if (len(model) > 16 or len(airline) > 16):
+                diff = max(len(model), len(airline)) - 16
+                print(diff)
+                for x in range (0, diff):
+                    # TODO: FIX BUG WHERE SHORTER LINE JUST SHOWS TEST FROM LONGER LINE AFTER IT IS DONE SCROLLING for bottom line
+                    lcd.message(airline + "\n")
+                    lcd.message(model + "\n")
+                    sleep(0.75)
+                    lcd.move_left()      
+            else:
+                lcd.message(airline + "\n")
+                lcd.message(model)
+            #clearlcd
+            sleep(DELAY)
+            
+
+    else:
+        print("No flights in zone")
+        # Sleep so don't keep pollingserver
+        sleep(20)
+        
+        
 # METAR Reports for airports of interest
 wxTPA = Metar('KTPA')
 wxGNV = Metar('KGNV')
@@ -52,6 +103,7 @@ wxORDProperties = wxORD.getAll()
 tpaCld = wxTPAProperties["cloud"]
 ordCld = wxORDProperties["cloud"]
 gnvCld = wxGNVProperties["cloud"]
+
 
 # TODO: PARSE METAR TEXT FOR VIS
 
