@@ -4,6 +4,7 @@ from FlightRadar24.api import FlightRadar24API
 from PythonMETAR import *
 from Adafruit_CharLCD import Adafruit_CharLCD
 from time import sleep
+import RPi.GPIO as GPIO
 
 # ZONE - Creates a zone to look for flights inside. tl is top left corner of box, br is bottom right.
 ZONE = {"tl_y": 29.754081, "tl_x": -82.511874, "br_y": 29.535365, "br_x": -82.147178 }
@@ -13,6 +14,15 @@ DELAY = 3.5
 
 # Counts how many times button has been pressed to toggle modes
 counter = 0;
+
+# GPIO Setup
+GPIO.setmode(GPIO.BCM)
+redPin = 12
+bluePin = 20
+greenPin = 16
+GPIO.setup(redPin, GPIO.OUT)
+GPIO.setup(greenPin, GPIO.OUT)
+GPIO.setup(bluePin, GPIO.OUT)
 
 # Declaring the LCD
 lcd = Adafruit_CharLCD (rs = 26, en = 19, d4 = 13, d5 = 6, d6 = 5, d7 = 21, cols = 16, lines = 2)
@@ -40,6 +50,8 @@ wxORDProperties = wxORD.getAll()
 tpaCld = wxTPAProperties["cloud"]
 ordCld = wxORDProperties["cloud"]
 gnvCld = wxGNVProperties["cloud"]
+
+
 
 # TODO: PARSE METAR TEXT FOR VIS
 
@@ -87,7 +99,47 @@ def updateWx():
     ordCld = wxORDProperties["cloud"]
     gnvCld = wxGNVProperties["cloud"]
 
+# RGB LED Functions
+def ledOff():
+    GPIO.output(redPin, GPIO.HIGH)
+    GPIO.output(greenPin, GPIO.HIGH)
+    GPIO.output(bluePin, GPIO.HIGH)
+    
+def ledRed():
+    GPIO.output(redPin, GPIO.LOW)
+    GPIO.output(greenPin, GPIO.HIGH)
+    GPIO.output(bluePin, GPIO.HIGH)
+    
+def ledGreen():
+    GPIO.output(redPin, GPIO.HIGH)
+    GPIO.output(greenPin, GPIO.LOW)
+    GPIO.output(bluePin, GPIO.HIGH)
+    
+def ledBlue():
+    GPIO.output(redPin, GPIO.HIGH)
+    GPIO.output(greenPin, GPIO.HIGH)
+    GPIO.output(bluePin, GPIO.LOW)
+    
+def ledPink():
+    GPIO.output(redPin, GPIO.LOW)
+    GPIO.output(greenPin, GPIO.HIGH)
+    GPIO.output(bluePin, GPIO.LOW)
+    
+# Function to change led color based on wx conditions
+def changeLEDColor(flightCat):
+    if (flightCat == "VFR"):
+        ledGreen()
+    elif (flightCat == "MVFR"):
+        ledBlue()
+    elif (flightCat == "IFR"):
+        ledRed()
+    elif (flightCat == "LIFR"):
+        ledPink()
+    else:
+        ledOff()
 
+# Turn off LED at start
+ledOff()
 
 while (counter == 0):
 
@@ -141,7 +193,6 @@ while (counter == 0):
             else:
                 lcd.message(airline + "\n")
                 lcd.message(model)
-            #clearlcd
             sleep(DELAY)
             
 
@@ -149,11 +200,10 @@ while (counter == 0):
         print("No flights in zone")
         # Sleep so don't keep pollingserver
         sleep(20)
-        
+    
     updateWx()
-    currGNVStatus = getFlightRules(gnvCld)
-    print(currGNVStatus)
-
+    # Get the current flight rules from wx update and set LED to that color
+    changeLEDColor(getFlightRules(gnvCld))
 
 
 
