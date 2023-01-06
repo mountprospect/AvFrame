@@ -1,6 +1,7 @@
 #1-5-2023
 
 from FlightRadar24.api import FlightRadar24API
+from PythonMETAR import *
 
 # ZONE - Creates a zone to look for flights inside. tl is top left corner of box, br is bottom right.
 ZONE = {"tl_y": 29.754081, "tl_x": -82.511874, "br_y": 29.535365, "br_x": -82.147178 }
@@ -34,5 +35,55 @@ if (len(flightsInZone) > 0):
 
 else:
     print("No flights in zone")
+    
+    
+# METAR Reports for airports of interest
+wxTPA = Metar('KTPA')
+wxGNV = Metar('KGNV')
+wxORD = Metar('KORD')
 
-#print(flightsInZone)
+# Get properties for all airports of interest
+wxTPAProperties = wxTPA.getAll()
+wxGNVProperties = wxGNV.getAll()
+wxORDProperties = wxORD.getAll()
+#print(wxTPAProperties.keys())
+
+# Get cloud properties 
+tpaCld = wxTPAProperties["cloud"]
+ordCld = wxORDProperties["cloud"]
+gnvCld = wxGNVProperties["cloud"]
+
+# TODO: PARSE METAR TEXT FOR VIS
+
+# Function to return flight rules as string
+def getFlightRules(cldID): # Use second param for vis
+    # TODO : Add visibility parameter
+    if (not cldID):
+        flightRules = "VFR"
+    else:
+        for i in range(len(cldID)):
+            code = cldID[i]["code"]
+            base = cldID[i]["altitude"]
+            vis = 0
+            if (code == "BKN" or code == "OVC"):
+                if (base < 500):
+                    flightRules = "LIFR"
+                elif (base >= 500 and base < 1000):
+                    flightRules = "IFR"
+                elif (base >= 1000 and base <= 3000):
+                    flightRules = "MVFR"
+                elif (base > 3000):
+                    flightRules = "VFR"
+                else:
+                    flightRules = "UNKN"
+            elif (code == "CLR"):
+                flightRules = "VFR"
+            else:
+                flightRules = "UNKN"
+    return flightRules
+
+print(wxTPA)
+print(wxORD)
+print(wxGNV)
+print("TPA: " + getFlightRules(tpaCld) + "\n" + "ORD: " + getFlightRules(ordCld) + "\n" + "GNV: " + getFlightRules(gnvCld))
+
