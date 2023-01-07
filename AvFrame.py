@@ -166,9 +166,10 @@ while (counter == 0):
             gs = flight.ground_speed
             airline = flight.airline_name
             status = flight.status_text
+
             
-            print(callsign + "|" +  str(alt) + "|" + model + "|" + code + "|" + origin + "|" + destination)
-            print("\n" + str(gs) + "|" + airline + "|" + status)
+            #print(callsign + "|" +  str(alt) + "|" + model + "|" + code + "|" + origin + "|" + destination)
+            #print("\n" + str(gs) + "|" + airline + "|" + status)
             
             # Print first two screens of information
             lcd.message(callsign + "   " + code + "\n")
@@ -183,7 +184,6 @@ while (counter == 0):
             # Print airline and model info, scrolling if necessary
             if (len(model) > 16 or len(airline) > 16):
                 diff = max(len(model), len(airline)) - 16
-                print(diff)
                 for x in range (0, diff):
                     # TODO: FIX BUG WHERE SHORTER LINE JUST SHOWS TEST FROM LONGER LINE AFTER IT IS DONE SCROLLING for bottom line
                     lcd.message(airline + "\n")
@@ -197,18 +197,45 @@ while (counter == 0):
             
 
     else:
-        print("No flights in zone")
+        lcd.message("No Flights\nIn Zone")
+        #print("No flights in zone")
         # Sleep so don't keep pollingserver
         sleep(20)
-    
-    updateWx()
+
     # Get the current flight rules from wx update and set LED to that color
-    changeLEDColor(getFlightRules(gnvCld))
-
-
-
+    updateWx()
+    lcd.clear()
+    changeLEDColor(getFlightRules(tpaCld))
+    lcd.message("KTPA:   " + getFlightRules(tpaCld))
+    sleep(5)
+    lcd.clear()
+    changeLEDColor(getFlightRules(ordCld))
+    lcd.message("KORD:   " + getFlightRules(ordCld))
+    sleep(5)
+    lcd.clear()
+    changeLEDColor(getFlightRules(tpaCld))
+    lcd.message("KGNV:   " + getFlightRules(gnvCld))
+    sleep(5)
+    lcd.clear()
+#         
+#     lcd.clear()
+#     changeLEDColor(getFlightRules(ordCld))
+#     scrollVal = len(wxORD) - 16
+#     for x in range (0, scrollVal):
+#         lcd.message(str(wxORD))
+#         sleep(0.75)
+#         lcd.move_left()
+#         
+#     lcd.clear()
+#     changeLEDColor(getFlightRules(gnvCld))
+#     scrollVal = len(wxGNV) - 16
+#     for x in range (0, scrollVal):
+#         lcd.message(str(wxGNV))
+#         sleep(0.75)
+#         lcd.move_left()
+'''
 print(wxTPA)
 print(wxORD)
 print(wxGNV)
 print("TPA: " + getFlightRules(tpaCld) + "\n" + "ORD: " + getFlightRules(ordCld) + "\n" + "GNV: " + getFlightRules(gnvCld))
-
+'''
