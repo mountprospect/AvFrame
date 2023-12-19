@@ -2,6 +2,7 @@
 # Made 12/17/2023
 
 from FlightRadar24.api import FlightRadar24API
+import PySimpleGUI as gui
 
 # ZONE - Creates a zone to look for flights inside. tl is top left corner of box, br is bottom right.
 ZONE = {"tl_y": 29.754081, "tl_x": -82.511874, "br_y": 29.535365, "br_x": -82.147178 }
@@ -34,10 +35,24 @@ if (len(flightsInZone) > 0):
         gs = flight.ground_speed
         airline = flight.airline_name
         status = flight.status_text
-        
-        print(callsign + "\n")
+
+        print(airline)
         
 else:
     print("No flights in zone!")
 
+# GUI Code
 
+gui.theme('BluePurple')
+layout = [ [gui.Text("Test")],
+           [gui.Text("Test2")] ]
+
+window = gui.Window("Title", layout)
+
+while True:
+    event, values = window.read()
+    if event == gui.WIN_CLOSED or event == 'Cancel':
+        break
+    print("Entered: ", values[0])
+    
+window.close()
